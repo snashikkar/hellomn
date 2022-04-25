@@ -1,0 +1,94 @@
+plugins {
+    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("io.micronaut.application") version "3.3.2"
+    id("com.google.cloud.tools.jib") version "2.8.0"
+    id("org.openrewrite.rewrite") version "5.12.0"
+    id("io.micronaut.aot") version "3.3.2"
+}
+
+version = "0.1"
+group = "com.example"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    annotationProcessor("io.micronaut:micronaut-http-validation")
+    annotationProcessor("io.micronaut.data:micronaut-data-processor")
+    annotationProcessor("io.micronaut.security:micronaut-security-annotations")
+    implementation("io.micronaut:micronaut-http-client")
+    implementation("io.micronaut:micronaut-jackson-databind")
+    implementation("io.micronaut:micronaut-management")
+    implementation("io.micronaut:micronaut-runtime")
+    implementation("io.micronaut.cache:micronaut-cache-ehcache")
+    implementation("io.micronaut.data:micronaut-data-hibernate-jpa")
+    implementation("io.micronaut.email:micronaut-email-javamail")
+    implementation("io.micronaut.email:micronaut-email-template")
+    implementation("io.micronaut.kubernetes:micronaut-kubernetes-client")
+    implementation("io.micronaut.kubernetes:micronaut-kubernetes-informer")
+    implementation("io.micronaut.multitenancy:micronaut-multitenancy")
+    implementation("io.micronaut.nats:micronaut-nats")
+    implementation("io.micronaut.problem:micronaut-problem-json")
+    implementation("io.micronaut.security:micronaut-security")
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    implementation("io.micronaut.toml:micronaut-toml")
+    implementation("io.micronaut.views:micronaut-views-thymeleaf")
+    implementation("jakarta.annotation:jakarta.annotation-api")
+    runtimeOnly("ch.qos.logback:logback-classic")
+    runtimeOnly("com.h2database:h2")
+    testImplementation("org.assertj:assertj-core")
+    testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("org.testcontainers:testcontainers")
+    rewrite("org.openrewrite.recipe:rewrite-micronaut:1.8.0")
+    compileOnly("org.graalvm.nativeimage:svm")
+
+    implementation("io.micronaut:micronaut-validation")
+
+    testImplementation("org.hamcrest:hamcrest")
+
+    testImplementation("org.mockito:mockito-core")
+
+}
+
+
+application {
+    mainClass.set("com.example.Application")
+}
+java {
+    sourceCompatibility = JavaVersion.toVersion("17")
+    targetCompatibility = JavaVersion.toVersion("17")
+}
+
+tasks {
+    jib {
+        to {
+            image = "gcr.io/myapp/jib-image"
+        }
+    }
+}
+graalvmNative.toolchainDetection = false
+micronaut {
+    runtime("netty")
+    testRuntime("junit5")
+    processing {
+        incremental(true)
+        annotations("com.example.*")
+    }
+    aot {
+        // Please review carefully the optimizations enabled below
+        // Check https://micronaut-projects.github.io/micronaut-aot/latest/guide/ for more details
+        optimizeServiceLoading = true
+        convertYamlToJava = true
+        precomputeOperations = true
+        cacheEnvironment = true
+        optimizeClassLoading = true
+        deduceEnvironment = true
+    }
+}
+
+
+rewrite {
+    activeRecipe("org.openrewrite.java.micronaut.Micronaut2to3Migration")
+}
+
